@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "codigo": "YP-001",
+    "nombre": "Pozo Vaca Muerta Norte",
+    "ubicacion": "Neuquen - Vaca Muerta",
+    "estado": "activo",
+    "fechaProduccion": "2022-03-15",
+    "descripcion": "Pozo de petroleo no convencional de alto rendimiento",
+    "icono": "🛢️",
+    "profundidadMts": 3200,
+    "produccionDiaria": 450
+  },
+  {
+    "id": 2,
+    "codigo": "YP-002",
+    "nombre": "Pozo Golfo Sur",
+    "ubicacion": "Chubut - Golfo San Jorge",
+    "estado": "en mantenimiento",
+    "fechaProduccion": "2020-07-10",
+    "descripcion": "Pozo convencional en parada programada",
+    "icono": "🔧",
+    "profundidadMts": 2500,
+    "produccionDiaria": 180
+  },
+  {
+    "id": 3,
+    "codigo": "YP-003",
+    "nombre": "Pozo Cuyano Este",
+    "ubicacion": "Mendoza - Cuyo",
+    "estado": "activo",
+    "fechaProduccion": "2021-11-01",
+    "descripcion": "Pozo de produccion media con inyeccion de agua",
+    "icono": "⛽",
+    "profundidadMts": 2800,
+    "produccionDiaria": 220
+  },
+  {
+    "id": 4,
+    "codigo": "YP-004",
+    "nombre": "Pozo Austral Viejo",
+    "ubicacion": "Santa Cruz - Austral",
+    "estado": "cerrado",
+    "fechaProduccion": "2015-05-20",
+    "descripcion": "Pozo agotado, cerrado por baja presion",
+    "icono": "🚧",
+    "profundidadMts": 1900,
+    "produccionDiaria": 0
+  }
+]
