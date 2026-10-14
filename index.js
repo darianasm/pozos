@@ -1,4 +1,5 @@
 require('dotenv').config();
+const fs = require('fs');
 const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
 
@@ -44,6 +45,8 @@ async function iniciarServidor() {
     db = client.db(DB_NAME);
     console.log('Conectado exitosamente a MongoDB');
 
+    await importarDatosIniciales();
+
     // El servidor solo arranca una vez que la base de datos está conectada y asignada
     app.listen(PORT, () => {
       console.log(`Servidor corriendo en http://localhost:${PORT}`);
@@ -71,6 +74,30 @@ app.get('/pozos', async (req, res) => {
   }
 });
 
+app.get('/pozos/buscar', async (req, res) => {
+  try {
+    const { codigo, estado } = req.query;
+    let filtro = {};
+
+    if (codigo) {
+      filtro.codigo = { $regex: codigo, $options: 'i' };
+    } else if (estado) {
+      filtro.estado = { $regex: estado, $options: 'i' };
+    } else {
+      return res.status(400).json({ error: 'Debe proporcionar un parámetro de búsqueda (codigo o estado)' });
+    }
+
+    const pozos = await db.collection('pozos').find(filtro).toArray();
+    if (pozos.length === 0) {
+      return res.status(404).json({ error: 'No se encontraron pozos con los criterios indicados' });
+    }
+
+    res.status(200).json(pozos);
+  } catch (error) {
+    res.status(500).json({ error: 'Error en la búsqueda', detalle: error.message });
+  }
+});
+
 app.get('/pozos/:id', async (req, res) => {
   try {
     const id = req.params.id;
@@ -89,44 +116,27 @@ app.get('/pozos/:id', async (req, res) => {
   }
 });
 
-app.get('/pozos/buscar', async (req, res) => {
-  try {
-    const { codigo, estado } = req.query;
-    let filtro = {};
-
-    if (codigo) {
-      filtro.codigo = { $regex: codigo,$options: 'i' };
-    } else if (estado) {
-      filtro.estado = { $regex: estado,$options: 'i' };
-    } else {
-      return res.status(400).json({ error: 'Debe proporcionar un parámetro de búsqueda (codigo o estado)' });
-    }
-
-    const pozos = await db.collection('pozos').find(filtro).toArray();
-    if (pozos.length === 0) {
-      return res.status(404).json({ error: 'No se encontraron pozos con los criterios indicados' });
-    }
-
-    res.status(200).json(pozos);
-  } catch (error) {
-    res.status(500).json({ error: 'Error en la búsqueda', detalle: error.message });
-  }
-});
-
 app.post('/pozos', async (req, res) => {
   try {
-    const { codigo, ubicacion, estado, fechaPuestaProduccion } = req.body;
+    const { codigo, nombre, ubicacion, estado, fechaPuestaProduccion, fechaProduccion, descripcion, icono, profundidadMts, produccionDiaria } = req.body;
 
     if (!codigo || !ubicacion || !estado) {
       return res.status(400).json({ error: 'Faltan campos obligatorios (codigo, ubicacion, estado)' });
     }
 
+    const fecha = fechaPuestaProduccion || fechaProduccion;
     const nuevoPozo = {
       codigo,
       ubicacion,
       estado,
-      fechaPuestaProduccion: fechaPuestaProduccion ? new Date(fechaPuestaProduccion) : new Date()
+      fechaPuestaProduccion: fecha ? new Date(fecha) : new Date()
     };
+
+    if (nombre) nuevoPozo.nombre = nombre;
+    if (descripcion) nuevoPozo.descripcion = descripcion;
+    if (icono) nuevoPozo.icono = icono;
+    if (profundidadMts !== undefined) nuevoPozo.profundidadMts = Number(profundidadMts);
+    if (produccionDiaria !== undefined) nuevoPozo.produccionDiaria = Number(produccionDiaria);
 
     const resultado = await db.collection('pozos').insertOne(nuevoPozo);
     res.status(201).json({
@@ -146,13 +156,23 @@ app.put('/pozos/:id', async (req, res) => {
       return res.status(400).json({ error: 'El ID proporcionado no es válido' });
     }
 
-    const { codigo, ubicacion, estado, fechaPuestaProduccion } = req.body;
+    const { codigo, nombre, ubicacion, estado, fechaPuestaProduccion, fechaProduccion, descripcion, icono, profundidadMts, produccionDiaria } = req.body;
     const datosActualizados = {};
 
     if (codigo) datosActualizados.codigo = codigo;
+    if (nombre) datosActualizados.nombre = nombre;
     if (ubicacion) datosActualizados.ubicacion = ubicacion;
     if (estado) datosActualizados.estado = estado;
-    if (fechaPuestaProduccion) datosActualizados.fechaPuestaProduccion = new Date(fechaPuestaProduccion);
+    if (descripcion) datosActualizados.descripcion = descripcion;
+    if (icono) datosActualizados.icono = icono;
+    if (profundidadMts !== undefined) datosActualizados.profundidadMts = Number(profundidadMts);
+    if (produccionDiaria !== undefined) datosActualizados.produccionDiaria = Number(produccionDiaria);
+    const fecha = fechaPuestaProduccion || fechaProduccion;
+    if (fecha) datosActualizados.fechaPuestaProduccion = new Date(fecha);
+
+    if (Object.keys(datosActualizados).length === 0) {
+      return res.status(400).json({ error: 'No se enviaron campos para actualizar' });
+    }
 
     const resultado = await db.collection('pozos').updateOne(
       { _id: new ObjectId(id) },
