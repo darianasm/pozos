@@ -1,7 +1,7 @@
 require('dotenv').config();
 const fs = require('fs');
 const express = require('express');
-const { MongoClient, ObjectId } = require('mongodb');
+const { MongoClient } = require('mongodb');
 
 const app = express();
 const PORT = process.env.PORT || 3008;
@@ -24,8 +24,7 @@ async function importarDatosIniciales() {
       const archivoData = fs.readFileSync('./pozos.json', 'utf-8');
       const pozosJson = JSON.parse(archivoData);
 
-      // Limpiamos los campos 'id' numéricos del JSON si queremos usar solo el _id de Mongo, 
-      // o los guardamos tal cual. Insertamos los datos:
+      // Insertamos los datos tal cual (con nuestro id numérico):
       await db.collection('pozos').insertMany(pozosJson);
       console.log('¡Datos de pozos.json importados exitosamente a MongoDB!');
     } else {
@@ -100,23 +99,13 @@ app.get('/pozos/buscar', async (req, res) => {
 
 app.get('/pozos/:id', async (req, res) => {
   try {
-    const id = req.params.id;
-    let pozo = null;
-
-    // 1. Si es un ObjectId válido de MongoDB (24 caracteres), buscamos por _id
-    if (ObjectId.isValid(id) && id.length === 24) {
-      pozo = await db.collection('pozos').findOne({ _id: new ObjectId(id) });
-    } 
-    // 2. Si no es un ObjectId pero es un número (ej: "1"), buscamos por el campo 'id' numérico del JSON
-    else if (!isNaN(id)) {
-      pozo = await db.collection('pozos').findOne({ id: Number(id) });
-    } 
-    // 3. Opcional: Si pasaron un código de texto (ej: "YP-001")
-    else {
-      pozo = await db.collection('pozos').findOne({ codigo: id });
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'El ID debe ser un número' });
     }
 
-    // Si después de todo no se encuentra el pozo
+    const pozo = await db.collection('pozos').findOne({ id: id });
+
     if (!pozo) {
       return res.status(404).json({ error: 'Pozo no encontrado' });
     }
@@ -137,7 +126,7 @@ app.post('/pozos', async (req, res) => {
 
     const fecha = fechaPuestaProduccion || fechaProduccion;
 
-    // Genera nuestro propio id numérico correlativo (max + 1), además del _id de Mongo
+    // Genera nuestro propio id numérico correlativo (max + 1)
     const ultimo = await db.collection('pozos').find().sort({ id: -1 }).limit(1).toArray();
     const nuevoId = ultimo.length > 0 ? ultimo[0].id + 1 : 1;
 
@@ -155,11 +144,10 @@ app.post('/pozos', async (req, res) => {
     if (profundidadMts !== undefined) nuevoPozo.profundidadMts = Number(profundidadMts);
     if (produccionDiaria !== undefined) nuevoPozo.produccionDiaria = Number(produccionDiaria);
 
-    const resultado = await db.collection('pozos').insertOne(nuevoPozo);
+    await db.collection('pozos').insertOne(nuevoPozo);
     res.status(201).json({
       mensaje: 'Pozo creado exitosamente',
       id: nuevoPozo.id,
-      _id: resultado.insertedId,
       pozo: nuevoPozo
     });
   } catch (error) {
@@ -169,10 +157,11 @@ app.post('/pozos', async (req, res) => {
 
 app.put('/pozos/:id', async (req, res) => {
   try {
-    const id = req.params.id;
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ error: 'El ID proporcionado no es válido' });
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'El ID debe ser un número' });
     }
+    const filtro = { id: id };
 
     const { codigo, nombre, ubicacion, estado, fechaPuestaProduccion, fechaProduccion, descripcion, icono, profundidadMts, produccionDiaria } = req.body;
     const datosActualizados = {};
@@ -193,7 +182,7 @@ app.put('/pozos/:id', async (req, res) => {
     }
 
     const resultado = await db.collection('pozos').updateOne(
-      { _id: new ObjectId(id) },
+      filtro,
       { $set: datosActualizados }
     );
 
@@ -209,12 +198,13 @@ app.put('/pozos/:id', async (req, res) => {
 
 app.delete('/pozos/:id', async (req, res) => {
   try {
-    const id = req.params.id;
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ error: 'El ID proporcionado no es válido' });
+    const id = Number(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: 'El ID debe ser un número' });
     }
+    const filtro = { id: id };
 
-    const resultado = await db.collection('pozos').deleteOne({ _id: new ObjectId(id) });
+    const resultado = await db.collection('pozos').deleteOne(filtro);
 
     if (resultado.deletedCount === 0) {
       return res.status(404).json({ error: 'Pozo no encontrado para eliminar' });

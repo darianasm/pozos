@@ -19,7 +19,7 @@ Esta API RESTful permite realizar operaciones CRUD (Crear, Leer, Actualizar y El
 
 Temática elegida: **Gestión de pozos petroleros** (código, ubicación, estado, fecha de puesta en producción).
 Cada documento incluye:
-- `id` / `_id` (ID)
+- `id` (ID numérico nuestro)
 - `codigo`, `nombre`, `ubicacion`, `descripcion` (texto)
 - `icono` (emoji en lugar de imagen)
 - `profundidadMts`, `produccionDiaria` (datos numéricos)
@@ -46,8 +46,8 @@ Cada documento incluye:
 | :--- | :--- | :--- | :--- | :--- |
 | **GET** | `/` | Verifica que la API está en línea | 200 OK | 500 Error interno |
 | **GET** | `/pozos` | Obtiene la lista completa de todos los pozos | 200 OK | 500 Error interno |
-| **GET** | `/pozos/buscar?codigo=YP&estado=activo` | Busca pozos por código o estado (query params) | 200 OK | 400 Sin parámetros, 404 No encontrado, 500 Error interno |
-| **GET** | `/pozos/:id` | Obtiene un pozo específico buscando por su ID de MongoDB | 200 OK | 400 ID inválido, 404 No encontrado, 500 Error interno |
+| **GET** | `/pozos/buscar?nombre=Vaca` o `?descripcion=hidraulica` | Busca pozos por nombre o descripción (query params) | 200 OK | 400 Sin parámetros, 404 No encontrado, 500 Error interno |
+| **GET** | `/pozos/:id` | Obtiene un pozo por su id numérico | 200 OK | 400 ID inválido, 404 No encontrado, 500 Error interno |
 | **POST** | `/pozos` | Da de alta un nuevo pozo petrolero | 201 Created | 400 Faltan datos, 500 Error interno |
 | **PUT** | `/pozos/:id` | Modifica los datos de un pozo existente por ID | 200 OK | 400 ID inválido / sin campos, 404 No encontrado, 500 Error interno |
 | **DELETE** | `/pozos/:id` | Elimina un pozo del sistema por su ID | 200 OK | 400 ID inválido, 404 No encontrado, 500 Error interno |
@@ -76,12 +76,12 @@ Respuesta de `GET /pozos/:id`:
 }
 ```
 
-Ejemplo de consulta:
-```bash
-curl http://localhost:3008/pozos
-curl http://localhost:3008/pozos/1
-curl "http://localhost:3008/pozos/buscar?estado=activo"
-```
+Para probar en Thunder Client crea estas peticiones GET (sin Body):
+
+- `GET http://localhost:3008/pozos`
+- `GET http://localhost:3008/pozos/1`
+- `GET http://localhost:3008/pozos/buscar?nombre=Vaca`
+- `GET http://localhost:3008/pozos/buscar?descripcion=hidraulica`
 
 ### 2. Estructura para Agregar (POST)
 Petición `POST /pozos` con body JSON:
@@ -99,18 +99,12 @@ Petición `POST /pozos` con body JSON:
 }
 ```
 
-Ejemplo:
-```bash
-curl -X POST http://localhost:3008/pozos \
-  -H "Content-Type: application/json" \
-  -d '{"codigo":"YP-005","nombre":"Pozo Vaca Muerta Sur","ubicacion":"Neuquen - Vaca Muerta","estado":"activo","descripcion":"Nuevo pozo horizontal","icono":"🛢️","profundidadMts":3100,"produccionDiaria":380}'
-```
+Para probar en Thunder Client: método `POST`, URL `http://localhost:3008/pozos`, pestaña Body -> JSON, pega el JSON de arriba.
 Respuesta exitosa `201 Created`:
 ```json
 {
   "mensaje": "Pozo creado exitosamente",
   "id": 13,
-  "_id": "64a2f1b2c9e77b0012345679",
   "pozo": {
     "id": 13,
     "codigo": "YP-005",
@@ -137,12 +131,7 @@ Petición `PUT /pozos/:id` (solo los campos a cambiar):
 }
 ```
 
-Ejemplo:
-```bash
-curl -X PUT http://localhost:3008/pozos/64a2f1b2c9e77b0012345678 \
-  -H "Content-Type: application/json" \
-  -d '{"estado":"en mantenimiento","produccionDiaria":0}'
-```
+Para probar en Thunder Client: método `PUT`, URL `http://localhost:3008/pozos/1`, pestaña Body -> JSON, pega el JSON de arriba.
 Respuesta exitosa `200 OK`:
 ```json
 {
@@ -151,9 +140,7 @@ Respuesta exitosa `200 OK`:
 ```
 
 ### 4. Eliminar (DELETE)
-```bash
-curl -X DELETE http://localhost:3008/pozos/64a2f1b2c9e77b0012345678
-```
+Para probar en Thunder Client: método `DELETE`, URL `http://localhost:3008/pozos/1` (sin Body).
 Respuesta exitosa `200 OK`:
 ```json
 {
