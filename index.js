@@ -101,11 +101,22 @@ app.get('/pozos/buscar', async (req, res) => {
 app.get('/pozos/:id', async (req, res) => {
   try {
     const id = req.params.id;
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ error: 'El ID proporcionado no es válido' });
+    let pozo = null;
+
+    // 1. Si es un ObjectId válido de MongoDB (24 caracteres), buscamos por _id
+    if (ObjectId.isValid(id) && id.length === 24) {
+      pozo = await db.collection('pozos').findOne({ _id: new ObjectId(id) });
+    } 
+    // 2. Si no es un ObjectId pero es un número (ej: "1"), buscamos por el campo 'id' numérico del JSON
+    else if (!isNaN(id)) {
+      pozo = await db.collection('pozos').findOne({ id: Number(id) });
+    } 
+    // 3. Opcional: Si pasaron un código de texto (ej: "YP-001")
+    else {
+      pozo = await db.collection('pozos').findOne({ codigo: id });
     }
 
-    const pozo = await db.collection('pozos').findOne({ _id: new ObjectId(id) });
+    // Si después de todo no se encuentra el pozo
     if (!pozo) {
       return res.status(404).json({ error: 'Pozo no encontrado' });
     }
