@@ -1,14 +1,16 @@
 # Documentación de la API REST - Gestión de Pozos Petroleros 🛢️
 
 ## Sumario
-1. [Introducción](#introducción)
-2. [Instalación y configuración](#instalación-y-configuración)
-3. [Tabla de Endpoints](#tabla-de-endpoints)
-4. [Ejemplos de Estructuras de Datos](#ejemplos-de-estructuras-de-datos)
-   - [Estructura de Consulta (GET)](#1-estructura-de-consulta-get---respuesta-de-un-pozo)
-   - [Estructura para Agregar (POST)](#2-estructura-para-agregar-post)
-   - [Estructura para Modificar (PUT)](#3-estructura-para-modificar-put)
-   - [Eliminar (DELETE)](#4-eliminar-delete)
+- [Documentación de la API REST - Gestión de Pozos Petroleros 🛢️](#documentación-de-la-api-rest---gestión-de-pozos-petroleros-️)
+  - [Sumario](#sumario)
+  - [Introducción](#introducción)
+  - [Instalación y configuración](#instalación-y-configuración)
+  - [Tabla de Endpoints](#tabla-de-endpoints)
+  - [Ejemplos de Estructuras de Datos](#ejemplos-de-estructuras-de-datos)
+    - [1. Estructura de Consulta (GET - Respuesta de un pozo)](#1-estructura-de-consulta-get---respuesta-de-un-pozo)
+    - [2. Estructura para Agregar (POST)](#2-estructura-para-agregar-post)
+    - [3. Estructura para Modificar (PUT)](#3-estructura-para-modificar-put)
+    - [4. Eliminar (DELETE)](#4-eliminar-delete)
 
 ---
 
@@ -29,7 +31,7 @@ Cada documento incluye:
 1. Instalar dependencias: `npm install`
 2. Crear archivo `.env` (ver `.env.example`):
    ```
-   PORT=3000
+   PORT=3008
    MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/
    MONGODB_DB=ypf_pozos
    ```
@@ -76,9 +78,9 @@ Respuesta de `GET /pozos/:id`:
 
 Ejemplo de consulta:
 ```bash
-curl http://localhost:3000/pozos
-curl http://localhost:3000/pozos/64a2f1b2c9e77b0012345678
-curl "http://localhost:3000/pozos/buscar?estado=activo"
+curl http://localhost:3008/pozos
+curl http://localhost:3008/pozos/1
+curl "http://localhost:3008/pozos/buscar?estado=activo"
 ```
 
 ### 2. Estructura para Agregar (POST)
@@ -99,7 +101,7 @@ Petición `POST /pozos` con body JSON:
 
 Ejemplo:
 ```bash
-curl -X POST http://localhost:3000/pozos \
+curl -X POST http://localhost:3008/pozos \
   -H "Content-Type: application/json" \
   -d '{"codigo":"YP-005","nombre":"Pozo Vaca Muerta Sur","ubicacion":"Neuquen - Vaca Muerta","estado":"activo","descripcion":"Nuevo pozo horizontal","icono":"🛢️","profundidadMts":3100,"produccionDiaria":380}'
 ```
@@ -107,8 +109,10 @@ Respuesta exitosa `201 Created`:
 ```json
 {
   "mensaje": "Pozo creado exitosamente",
-  "id": "64a2f1b2c9e77b0012345679",
+  "id": 13,
+  "_id": "64a2f1b2c9e77b0012345679",
   "pozo": {
+    "id": 13,
     "codigo": "YP-005",
     "ubicacion": "Neuquen - Vaca Muerta",
     "estado": "activo",
@@ -135,7 +139,7 @@ Petición `PUT /pozos/:id` (solo los campos a cambiar):
 
 Ejemplo:
 ```bash
-curl -X PUT http://localhost:3000/pozos/64a2f1b2c9e77b0012345678 \
+curl -X PUT http://localhost:3008/pozos/64a2f1b2c9e77b0012345678 \
   -H "Content-Type: application/json" \
   -d '{"estado":"en mantenimiento","produccionDiaria":0}'
 ```
@@ -148,7 +152,7 @@ Respuesta exitosa `200 OK`:
 
 ### 4. Eliminar (DELETE)
 ```bash
-curl -X DELETE http://localhost:3000/pozos/64a2f1b2c9e77b0012345678
+curl -X DELETE http://localhost:3008/pozos/64a2f1b2c9e77b0012345678
 ```
 Respuesta exitosa `200 OK`:
 ```json

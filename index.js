@@ -4,7 +4,7 @@ const express = require('express');
 const { MongoClient, ObjectId } = require('mongodb');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3008;
 const MONGO_URI = process.env.MONGODB_URI;
 const DB_NAME = process.env.MONGODB_DB || 'ypf_pozos';
 
@@ -76,15 +76,15 @@ app.get('/pozos', async (req, res) => {
 
 app.get('/pozos/buscar', async (req, res) => {
   try {
-    const { codigo, estado } = req.query;
+    const { nombre, descripcion } = req.query;
     let filtro = {};
 
-    if (codigo) {
-      filtro.codigo = { $regex: codigo, $options: 'i' };
-    } else if (estado) {
-      filtro.estado = { $regex: estado, $options: 'i' };
+    if (nombre) {
+      filtro.nombre = { $regex: nombre, $options: 'i' };
+    } else if (descripcion) {
+      filtro.descripcion = { $regex: descripcion, $options: 'i' };
     } else {
-      return res.status(400).json({ error: 'Debe proporcionar un parámetro de búsqueda (codigo o estado)' });
+      return res.status(400).json({ error: 'Debe proporcionar un parámetro de búsqueda (nombre o descripcion)' });
     }
 
     const pozos = await db.collection('pozos').find(filtro).toArray();
@@ -136,7 +136,13 @@ app.post('/pozos', async (req, res) => {
     }
 
     const fecha = fechaPuestaProduccion || fechaProduccion;
+
+    // Genera nuestro propio id numérico correlativo (max + 1), además del _id de Mongo
+    const ultimo = await db.collection('pozos').find().sort({ id: -1 }).limit(1).toArray();
+    const nuevoId = ultimo.length > 0 ? ultimo[0].id + 1 : 1;
+
     const nuevoPozo = {
+      id: nuevoId,
       codigo,
       ubicacion,
       estado,
@@ -152,7 +158,8 @@ app.post('/pozos', async (req, res) => {
     const resultado = await db.collection('pozos').insertOne(nuevoPozo);
     res.status(201).json({
       mensaje: 'Pozo creado exitosamente',
-      id: resultado.insertedId,
+      id: nuevoPozo.id,
+      _id: resultado.insertedId,
       pozo: nuevoPozo
     });
   } catch (error) {
